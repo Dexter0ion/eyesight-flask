@@ -26,7 +26,7 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
-        
+
     CORS(app, support_credentials=True)
     # a simple page that says hello
     @app.route('/hello')
@@ -34,7 +34,7 @@ def create_app(test_config=None):
         return 'Hello, World!'
 
     #serach query
-
+    
     @app.route('/search', methods=['GET', 'POST'])
     @cross_origin(supports_credentials=True)
     
@@ -46,7 +46,7 @@ def create_app(test_config=None):
                 'age': 10
             }, {
                 'name': 'black',
-                'age': 20
+                'age': 19
             }]
             print("test")
             return json.dumps(persons)
