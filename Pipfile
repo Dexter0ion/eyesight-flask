@@ -9,6 +9,7 @@ yapf = "*"
 [packages]
 flask = "*"
 flask-cors = "*"
+opencv-python = "*"
 
 [requires]
 python_version = "3.6"

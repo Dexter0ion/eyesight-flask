@@ -1,10 +1,10 @@
 import os
 
-from flask import Flask, request
+from flask import Flask, request,Response
 from flask_cors import *
 import json
-
-
+import cv2
+import base64
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
@@ -50,8 +50,28 @@ def create_app(test_config=None):
             }]
             print("test")
             return json.dumps(persons)
-        return "OK"
+        
+    
+        if params['query'] == 'object':
+            path = 'eyesight/objectdatas'
+            datas = []
+            for file in os.listdir(path):
+                name = file.split(':',1)[0]
+                value = file.split(':',1)[1][:-3]
+                #img = cv2.imread(path + '/'+file).tolist()
+                with open(path + '/'+file, 'rb') as f:
+                     img=base64.b64encode(f.read())
+                img = img.decode('utf-8') #将image2str转为str
+                #imgstr = bytes.decode(img)
+                #img = Response(img, mimetype="image/jpeg")
+                #print(name+value)
+                datas.append({'img':img,'name':name,'value':value})
+            #print(datas)
+            return json.dumps(datas)
 
+
+        return "OK"
+    
     from . import db
     db.init_app(app)
 
