@@ -1,9 +1,10 @@
 import os
 
-from flask import Flask, request,Response
+from flask import Flask, request,Response,jsonify
 from flask_cors import *
 import json
 import cv2
+import numpy as np
 import base64
 def create_app(test_config=None):
     # create and configure the app
@@ -29,12 +30,37 @@ def create_app(test_config=None):
 
     CORS(app, support_credentials=True)
     # a simple page that says hello
-    @app.route('/hello')
+    @app.route('/hello',methods=['GET','POST'])
     def hello():
-        return 'Hello, World!'
-
-    #serach query
+        if(request.method == 'POST'):
+            post_json = request.get_json()
+            return jsonify({'you sent':post_json}),201
+        else:
+            return jsonify({'about':"Hello World"})
     
+    # route带参数
+    #  http://127.0.0.1:5000/multi/100
+    @app.route('/multi/<int:num>',methods=['GET'])
+    def get_multuply(num):
+        return jsonify({'result':num*10})
+
+
+    # API Objectdatas resource
+    
+    @app.route('/api/objectdatas',methods=['GET','POST'])
+    def api_objects():
+        if (request.method == 'POST'):
+            objects_json = request.get_json()
+            obj_ndarray = np.array(objects_json['data'])
+            print(obj_ndarray)
+            cv2.imwrite('eyesight/objectdatas/%s.jpg' % "test",obj_ndarray)
+            print("目标剪切图片保存完成")
+            return jsonify({'objects_data':objects_json}),201
+
+        else:
+            print("GET")
+    # sample 
+    #serach query
     @app.route('/search', methods=['GET', 'POST'])
     @cross_origin(supports_credentials=True)
     
