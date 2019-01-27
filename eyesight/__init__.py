@@ -6,6 +6,7 @@ import json
 import cv2
 import numpy as np
 import base64
+import socket
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
@@ -29,6 +30,36 @@ def create_app(test_config=None):
         pass
 
     CORS(app, support_credentials=True)
+
+
+    # Create a UDP socket
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    #host = sys.argv[1]
+    #port = int(sys.argv[2])
+    host = ''
+    port = 1082
+    server_address = (host, port)
+    sock.bind(server_address)
+
+    #Video streaming generator function
+    def gen(type):
+        while True:
+            if type == 'POST':
+                fopen=[open('loaded.jpg', 'rb').read()]
+                frame = fopen[0]
+                time.sleep(0.1)
+                yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            
+            elif type == 'UDP':
+                data, server = sock.recvfrom(65507)
+                print("Fragment size : {}".format(len(data)))
+                if len(data) == 4:
+                        # This is a message error sent back by the server
+                        if(data == "FAIL"):
+                                continue
+                yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + data + b'\r\n')
+        
+
     # a simple page that says hello
     @app.route('/hello',methods=['GET','POST'])
     def hello():
@@ -59,6 +90,13 @@ def create_app(test_config=None):
 
         else:
             print("GET")
+
+    # API livestream
+    @app.route('/api/livestream/udp',methods=['GET'])
+    def api_livestream():
+        return Response(gen('UDP'),mimetype='multipart/x-mixed-replace; boundary=frame')
+                
+
     # sample 
     #serach query
     @app.route('/search', methods=['GET', 'POST'])
