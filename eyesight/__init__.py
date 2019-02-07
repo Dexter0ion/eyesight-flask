@@ -7,6 +7,9 @@ import cv2
 import numpy as np
 import base64
 import socket
+from flask import Flask
+from flask_cache import Cache
+
 def create_app(test_config=None):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
@@ -32,14 +35,22 @@ def create_app(test_config=None):
     CORS(app, support_credentials=True)
 
 
-    # Create a UDP socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    #host = sys.argv[1]
-    #port = int(sys.argv[2])
-    host = ''
-    port = 1082
-    server_address = (host, port)
-    sock.bind(server_address)
+    # 使用Flask-Cache
+    # http://www.pythondoc.com/flask-cache/index.html
+
+    # Check Configuring Flask-Cache section for more details
+    cache = Cache(app,config={'CACHE_TYPE': 'simple'})  
+    cache.init_app(app)
+
+    @cache.cached(timeout=50, key_prefix='classIdCnt')
+    def cache_classIdCnt(method,data):
+        if(method == "save"):
+            saved_id = json.dumps(data)
+            cache.set('classidcnt', saved_id, timeout=10)
+            
+            print("classid缓存成功")
+        elif (method == "load"):
+            return cache.get('classidcnt')
 
     #Video streaming generator function
     def gen(type):
@@ -51,6 +62,12 @@ def create_app(test_config=None):
                 yield (b'--frame\r\n'b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
             
             elif type == 'UDP':
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    
+                host = ''
+                port = 1082
+                server_address = (host, port)
+                sock.bind(server_address)
                 data, server = sock.recvfrom(65507)
                 print("Fragment size : {}".format(len(data)))
                 if len(data) == 4:
@@ -94,9 +111,26 @@ def create_app(test_config=None):
     # API livestream
     @app.route('/api/livestream/udp',methods=['GET'])
     def api_livestream():
+            # Create a UDP socket
+       
         return Response(gen('UDP'),mimetype='multipart/x-mixed-replace; boundary=frame')
                 
+    # API classid
+    # 每一帧目标捕获数统计
+    @app.route('/api/classid',methods=['GET','POST'])
+    def api_classid():
+        if (request.method == 'POST'):
+            classid_json = request.get_json()
+            classid_data = classid_json['data']
+            print(classid_data) 
+            cache_classIdCnt("save",classid_data)
 
+            return jsonify({'clasdid_data':classid_data}),201
+
+        elif (request.method == 'GET'):
+            print("GET CLASS ID---")
+            print(cache_classIdCnt("load",None))
+            return cache_classIdCnt("load",None)
     # sample 
     #serach query
     @app.route('/search', methods=['GET', 'POST'])
