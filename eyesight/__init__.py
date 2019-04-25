@@ -42,15 +42,31 @@ def create_app(test_config=None):
     cache = Cache(app,config={'CACHE_TYPE': 'simple'})  
     cache.init_app(app)
 
-    @cache.cached(timeout=50, key_prefix='classIdCnt')
+    cachePortrait = Cache(app,config={'CACHE_TYPE': 'simple'})  
+    cachePortrait.init_app(app)
+    @cache.cached(timeout=5, key_prefix='classIdCnt')
     def cache_classIdCnt(method,data):
         if(method == "save"):
             saved_id = json.dumps(data)
-            cache.set('classidcnt', saved_id, timeout=10)
+            cache.set('classidcnt', saved_id, timeout=5)
             
             print("classid缓存成功")
         elif (method == "load"):
             return cache.get('classidcnt')
+
+
+    @cachePortrait.cached(timeout=5, key_prefix='portrait')
+    def cache_portrait(method,data):
+        if(method == "save"):
+
+            saved_portrait = json.dumps(data)
+            #print(saved_portrait)
+            cache.set('portrait', saved_portrait, timeout=5)
+            
+            print("portrait缓存成功")
+        elif (method == "load"):
+            print(cache.get('portrait'))
+            return cache.get('portrait')
 
     #Video streaming generator function
     def gen(type):
@@ -121,6 +137,7 @@ def create_app(test_config=None):
     def api_classid():
         if (request.method == 'POST'):
             classid_json = request.get_json()
+            
             classid_data = classid_json['data']
             print(classid_data) 
             cache_classIdCnt("save",classid_data)
@@ -128,9 +145,32 @@ def create_app(test_config=None):
             return jsonify({'clasdid_data':classid_data}),201
 
         elif (request.method == 'GET'):
+            
             print("GET CLASS ID---")
             print(cache_classIdCnt("load",None))
             return cache_classIdCnt("load",None)
+    
+    #API portrait
+    @app.route('/api/portrait',methods=['GET','POST'])
+    def api_portrait():
+        if(request.method == 'POST'):
+            portrait_json = request.get_json()
+
+            
+            portrait_data = portrait_json['data']
+            print('[POST Portrait Data]') 
+            
+            cache_portrait("save",portrait_data)
+            return jsonify({'portrait_data':portrait_data}),201
+            
+        elif (request.method == 'GET'):
+            print("[GET Portrait Data]")
+
+            print(cache_portrait("load",None))
+            return cache_portrait("load",None)
+
+
+
     # sample 
     #serach query
     @app.route('/search', methods=['GET', 'POST'])
