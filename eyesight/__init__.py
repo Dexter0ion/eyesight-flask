@@ -124,7 +124,7 @@ def create_app(test_config=None):
             print(obj_ndarray)
             cv2.imwrite('eyesight/objectdatas/%s.jpg' % obj_name,obj_ndarray)
             print("目标剪切图片保存完成")
-            return jsonify({'objects_data':objects_json}),201
+            return 201
 
         else:
             print("GET")
