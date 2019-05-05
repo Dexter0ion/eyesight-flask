@@ -119,9 +119,10 @@ def create_app(test_config=None):
     def api_objects():
         if (request.method == 'POST'):
             objects_json = request.get_json()
-            obj_ndarray = np.array(objects_json['data'])
+            obj_ndarray = np.array(objects_json['data'][1])
+            obj_name = objects_json['data'][0]
             print(obj_ndarray)
-            cv2.imwrite('eyesight/objectdatas/%s.jpg' % "test",obj_ndarray)
+            cv2.imwrite('eyesight/objectdatas/%s.jpg' % obj_name,obj_ndarray)
             print("目标剪切图片保存完成")
             return jsonify({'objects_data':objects_json}),201
 
