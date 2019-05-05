@@ -83,10 +83,11 @@ def create_app(test_config=None):
                 host = ''
                 port = 1082
                 server_address = (host, port)
-
+                
                 #允许复用地址
                 sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)  
                 sock.bind(server_address)
+                print("UDP LINK BIND COMPLETE")
                 data, server = sock.recvfrom(65507)
                 print("Fragment size : {}".format(len(data)))
                 if len(data) == 4:
